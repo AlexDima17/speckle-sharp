@@ -70,6 +70,27 @@ public partial class ConverterRhinoGh : ISpeckleConverter
 
   public ProgressReport Report { get; private set; } = new();
 
+  //my prop to store facade layer
+  public Layer FacadeLayer
+  {
+    get
+    {
+      return GetLayer(Doc, "FacadeA::curvesA", out int idx);
+    }
+    set { }
+  }
+
+  //add a Graph layer,where or the layers participating in the Graph are
+  public Layer GraphLayer
+  {
+    get
+    {
+      return GetLayer(Doc, "Graph", out int index);
+
+    }
+    set { }
+  }
+
   public ReceiveMode ReceiveMode { get; set; }
 
   public IEnumerable<string> GetServicedApplications()
@@ -165,38 +186,52 @@ public partial class ConverterRhinoGh : ISpeckleConverter
     // get preprocessing setting
     var defaultPreprocess = PreprocessGeometry;
 
+    //bool ro see if it is facade curve
+    bool isFacadeCurve = false;
+   
     try
     {
       switch (@object)
       {
         case RhinoObject ro:
-          var roId = ro.Attributes.GetUserString(ApplicationIdKey) ?? ro.Id.ToString();
-          reportObj = new ApplicationObject(ro.Id.ToString(), ro.ObjectType.ToString()) { applicationId = roId };
-          material = RenderMaterialToSpeckle(ro.GetMaterial(true));
-          style = DisplayStyleToSpeckle(ro.Attributes);
-          userDictionary = ro.UserDictionary;
-          userStrings = ro.Attributes.GetUserStrings();
-          objName = ro.Attributes.Name;
+          //test if this object is in our facade layer
+          var objLayerid = ro.Attributes.LayerIndex;
+          //if (objLayerid == FacadeLayer.Index)
+          //{
+          //  @base = FacadeCurveToSpeckle(ro.Geometry);
+          //  isFacadeCurve = true;
+          //}
+          //else
+          //{
+            var roId = ro.Attributes.GetUserString(ApplicationIdKey) ?? ro.Id.ToString();
+            reportObj = new ApplicationObject(ro.Id.ToString(), ro.ObjectType.ToString()) { applicationId = roId };
+            material = RenderMaterialToSpeckle(ro.GetMaterial(true));
+            style = DisplayStyleToSpeckle(ro.Attributes);
+            userDictionary = ro.UserDictionary;
+            userStrings = ro.Attributes.GetUserStrings();
+            objName = ro.Attributes.Name;
 
-          // Fast way to get the displayMesh, try to get the mesh rhino shows on the viewport when available.
-          // This will only return a mesh if the object has been displayed in any mode other than Wireframe.
-          if (ro is BrepObject || ro is ExtrusionObject)
-          {
-            displayMesh = GetRhinoRenderMesh(ro);
-          }
+            // Fast way to get the displayMesh, try to get the mesh rhino shows on the viewport when available.
+            // This will only return a mesh if the object has been displayed in any mode other than Wireframe.
+            if (ro is BrepObject || ro is ExtrusionObject)
+            {
+              displayMesh = GetRhinoRenderMesh(ro);
+            }
 
-          //mapping tool
-          var mappingString = ro.Attributes.GetUserString(SpeckleMappingKey);
-          if (mappingString != null)
-          {
-            schema = MappingToSpeckle(mappingString, ro, notes);
-          }
+            //mapping tool
+            var mappingString = ro.Attributes.GetUserString(SpeckleMappingKey);
+            if (mappingString != null)
+            {
+              schema = MappingToSpeckle(mappingString, ro, notes);
+            }
 
-          if (!(@object is InstanceObject))
-          {
-            @object = ro.Geometry; // block instance check
-          }
+            if (!(@object is InstanceObject))
+            {
+              @object = ro.Geometry; // block instance check
+            }
+         // }
 
+            //check if this a graph layer
           break;
 
         case Layer l:

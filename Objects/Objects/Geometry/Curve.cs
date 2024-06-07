@@ -32,6 +32,7 @@ public class Curve : Base, ICurve, IHasBoundingBox, IHasArea, ITransformable<Cur
   public int degree { get; set; }
 
   public bool periodic { get; set; }
+  public string Name { get; set; }
 
   /// <summary>
   /// "True" if weights differ, "False" if weights are the same.
@@ -200,4 +201,10 @@ public class Curve : Base, ICurve, IHasBoundingBox, IHasArea, ITransformable<Cur
     curve.units = Units.GetUnitFromEncoding(list[list.Count - 1]);
     return curve;
   }
+}
+
+public class FacadeCurve : Curve
+{
+  public Brep DesignSrf { get; set; }
+  public FacadeCurve() { }
 }
